@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Converter — CurrencyApp</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.converter-page {
+  position: relative;
+  min-height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+}
+.converter-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Dark candlestick forex chart — deep teal glow, fits navy theme */
+  background: url('https://images.unsplash.com/photo-1543286386-713bdd548da4?w=1600&auto=format&fit=crop&q=80') no-repeat center/cover;
+  opacity: 0.09;
+  z-index: 0;
+}
+.converter-wrapper {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px;
+}
+.converter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(13,26,45,0.82);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  padding: 36px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 50px var(--gold-glow);
+}
+.card-header {
+  text-align: center;
+  margin-bottom: 4px;
+}
+/* Unique: dark coins+notes banner inside card */
+.card-banner {
+  width: 100%;
+  height: 110px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.card-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.65;
+  filter: brightness(0.7) saturate(0.75);
+}
+.card-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(6,11,20,0.5), transparent, rgba(6,11,20,0.5));
+}
+.converter-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--gold-light);
+}
+.rate-hint { font-size: 13px; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">💱</div>
+    <h1>CurrencyApp</h1>
+  </div>
+  <nav>
+  <a href="index.html">Home</a>
+  <a href="converter.html" class="active">Converter</a>
+  <a href="rates.html">Rates</a>
+  <a href="travel.html">Travel Log</a>
+  <a href="about.html">About</a>
+  <a href="login.html" id="nav-auth-link">Account</a>
+</nav>
+
+</header>
+
+<div class="converter-page">
+  <div class="converter-wrapper">
+    <div class="converter-card">
+
+      <div class="card-banner">
+        <img src="https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=700&auto=format&fit=crop&q=80" alt="Currency notes">
+      </div>
+
+      <div class="card-header">
+        <h2>Convert Currency 💱</h2>
+        <p class="rate-hint">Select currencies and enter an amount</p>
+      </div>
+
+      <div class="row">
+        <input type="number" placeholder="Amount" id="amount" min="0">
+        <select id="from">
+          <option value="USD">🇺🇸 USD</option>
+          <option value="INR" selected>🇮🇳 INR</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+          <option value="JPY">🇯🇵 JPY</option>
+          <option value="AUD">🇦🇺 AUD</option>
+          <option value="CAD">🇨🇦 CAD</option>
+          <option value="AED">🇦🇪 AED</option>
+          <option value="SGD">🇸🇬 SGD</option>
+          <option value="CHF">🇨🇭 CHF</option>
+        </select>
+      </div>
+
+      <div class="swap" id="swapBtn" title="Swap currencies" onclick="swapCurrencies()">⇅</div>
+
+      <div class="row">
+        <input type="number" placeholder="Converted" id="result" disabled>
+        <select id="to">
+          <option value="USD">🇺🇸 USD</option>
+          <option value="INR">🇮🇳 INR</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+          <option value="JPY">🇯🇵 JPY</option>
+          <option value="AUD">🇦🇺 AUD</option>
+          <option value="CAD">🇨🇦 CAD</option>
+          <option value="AED">🇦🇪 AED</option>
+          <option value="SGD">🇸🇬 SGD</option>
+          <option value="CHF">🇨🇭 CHF</option>
+        </select>
+      </div>
+
+      <button onclick="convert()">Convert ✦</button>
+      <button type="button" onclick="compareAll()" style="background: transparent; border: 1px solid var(--border-strong); color: var(--gold-light); margin-top: 0;">Compare All Currencies</button>
+      
+      <div class="result" id="resultDisplay">Result will appear here</div>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="comparisonSection" style="display: none; scroll-margin-top: 100px;">
+  <h3 class="section-title" id="comparisonTitle">Global Comparisons</h3>
+  <div class="rates-flex" id="comparisonGrid">
+    </div>
+</div>
+<script>
+  function swapCurrencies() {
+  const fromSelect = document.getElementById('from');
+  const toSelect = document.getElementById('to');
+  const temp = fromSelect.value;
+  
+  fromSelect.value = toSelect.value;
+  toSelect.value = temp;
+}
+
+async function convert() {
+  const amount = parseFloat(document.getElementById('amount').value);
+  const from = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const resultBox = document.getElementById('resultDisplay');
+  
+  if (!amount || amount <= 0) {
+    resultBox.innerHTML = "Enter a valid amount";
+    return;
+  }
+
+  if (from === to) {
+    document.getElementById('result').value = amount.toFixed(2);
+    resultBox.innerHTML = `
+      ${amount} ${from} = <span style="color:#4ade80;">${amount} ${to}</span>
+    `;
+    return;
+  }
+
+  resultBox.innerHTML = "Fetching live rates...";
+  try {
+    const response = await fetch(`https://open.er-api.com/v6/latest/${from}`);
+    const data = await response.json();
+    const rate = data.rates[to];
+    const converted = amount * rate;
+    
+    document.getElementById('result').value = converted.toFixed(2);
+    resultBox.innerHTML = `
+      ${amount} ${from} = <span style="color:#4ade80;">${converted.toFixed(2)} ${to}</span>
+       <br>
+      <small style="color:#94a3b8;">Live Exchange Rate Updated</small>
+    `;
+
+  } catch (error) {
+    console.log(error);
+    resultBox.innerHTML = "Failed to fetch live rates";
+  }
+}
+
+async function compareAll() {
+  const amount = parseFloat(document.getElementById('amount').value);
+  const from = document.getElementById('from').value;
+  const resultBox = document.getElementById('resultDisplay');
+  const compSection = document.getElementById('comparisonSection');
+  const compGrid = document.getElementById('comparisonGrid');
+  const compTitle = document.getElementById('comparisonTitle');
+
+  if (!amount || amount <= 0) {
+    resultBox.innerHTML = "Enter a valid amount first";
+    return;
+  }
+
+  resultBox.innerHTML = "Generating global comparisons below...";
+
+  try {
+    const response = await fetch(`https://open.er-api.com/v6/latest/${from}`);
+    const data = await response.json();
+    
+    const targetCurrencies = [
+      { code: "USD", flag: "🇺🇸" },
+      { code: "INR", flag: "🇮🇳" },
+      { code: "EUR", flag: "🇪🇺" },
+      { code: "GBP", flag: "🇬🇧" },
+      { code: "JPY", flag: "🇯🇵" },
+      { code: "AUD", flag: "🇦🇺" },
+      { code: "CAD", flag: "🇨🇦" },
+      { code: "AED", flag: "🇦🇪" },
+      { code: "SGD", flag: "🇸🇬" },
+      { code: "CHF", flag: "🇨🇭" }
+    ];
+    compTitle.innerHTML = `Global Comparisons for ${amount} ${from}`;
+    compGrid.innerHTML = ""; 
+    targetCurrencies.forEach(target => {
+      if (target.code !== from && data.rates[target.code]) {
+        const convertedValue = amount * data.rates[target.code];
+        compGrid.innerHTML += `
+          <div class="rate-card">
+            <div class="flag">${target.flag}</div>
+            <h3>${from} → ${target.code}</h3>
+            <p>${convertedValue.toFixed(2)} <span style="font-size: 14px; color: var(--text-muted);">${target.code}</span></p>
+          </div>
+        `;
+      }
+    });
+    
+    compSection.style.display = "block";
+    compSection.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (error) {
+    console.log(error);
+    resultBox.innerHTML = "Failed to fetch comparison rates";
+  }
+}
+</script>
+</body>
+</html>

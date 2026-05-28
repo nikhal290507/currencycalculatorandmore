@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exchange Rates — CurrencyApp</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.page-banner::before {
+  background: url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&auto=format&fit=crop&q=80') no-repeat center/cover !important;
+}
+.section-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 16px;
+  opacity: 0.55;
+  filter: brightness(0.7) saturate(0.75);
+  border: 1px solid var(--border);
+  margin-bottom: 40px;
+  display: block;
+}
+
+.alert-manager-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+  margin-bottom: 40px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .alert-manager-grid { grid-template-columns: 1fr; }
+}
+
+.active-alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(6,11,20,0.5);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.clear-alert-btn {
+  background: transparent;
+  color: #f87171;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+}
+.clear-alert-btn:hover {
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+#notification-toast {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 90%;
+  max-width: 480px;
+  background: rgba(13, 26, 45, 0.95);
+  border: 2px solid var(--gold);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 30px var(--gold-glow);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#notification-toast.show {
+  top: 24px;
+}
+
+.timespan-selector {
+  display: flex;
+  gap: 10px;
+}
+.timespan-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: auto;
+  margin-top: 0;
+  box-shadow: none;
+  transition: all 0.25s ease;
+}
+.timespan-btn:hover {
+  color: var(--gold-light);
+  border-color: var(--border-strong);
+  transform: none;
+  box-shadow: none;
+}
+.timespan-btn.active {
+  background: rgba(201,168,76,0.12);
+  color: var(--gold-light);
+  border-color: var(--gold);
+  box-shadow: 0 0 15px var(--gold-glow);
+}
+
+.footer-contact-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px 20px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 50px;
+  text-align: left;
+}
+.footer-info-col h3, .footer-form-col h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold-light);
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+.footer-info-col p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+#footer-success-msg {
+  display: none;
+  text-align: center;
+  color: var(--gold-light);
+  font-size: 14px;
+  margin-top: 6px;
+  padding: 12px;
+  background: rgba(201,168,76,0.07);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+  .footer-contact-wrapper { grid-template-columns: 1fr; gap: 36px; padding: 30px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div id="notification-toast">
+  <div>
+    <h4 style="color: var(--gold-light); font-family: 'Playfair Display', serif; margin-bottom: 2px;">🔔 Rate Threshold Triggered!</h4>
+    <p id="notification-message" style="font-size: 13px; color: var(--text-bright);"></p>
+  </div>
+  <button onclick="dismissNotification()" style="width: auto; padding: 6px 12px; font-size: 12px; margin: 0; background: var(--border-strong); color: white;">Dismiss</button>
+</div>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">💱</div>
+    <h1>CurrencyApp</h1>
+  </div>
+  <nav>
+  <a href="index.html">Home</a>
+  <a href="converter.html">Converter</a>
+  <a href="rates.html" class="active">Rates</a>
+  <a href="travel.html">Travel Log</a>
+  <a href="about.html">About</a>
+  <a href="login.html" id="nav-auth-link">Account</a>
+</nav>
+</header>
+
+<div class="page-banner">
+  <div class="banner-content">
+    <h2>📈 Exchange Rates</h2>
+    <p>Live currency rates against the Indian Rupee</p>
+  </div>
+</div>
+
+<div class="container">
+  
+  <div class="search-box">
+    <input type="text" id="currencySearch" placeholder="🔍 Search currency...">
+  </div>
+
+  <h3 class="section-title">🔔 Live Threshold Watch Center</h3>
+  <div class="alert-manager-grid">
+    <div class="glass-card">
+      <h4 style="font-family: 'Playfair Display', serif; color: var(--gold-light); margin-bottom: 14px;">Set Custom Alert</h4>
+      <div class="form-group" style="gap: 10px;">
+        <select id="alertCurrency">
+          <option value="USD">🇺🇸 USD to INR</option>
+          <option value="EUR">🇪🇺 EUR to INR</option>
+          <option value="GBP">🇬🇧 GBP to INR</option>
+          <option value="AUD">🇦🇺 AUD to INR</option>
+          <option value="CAD">🇨🇦 CAD to INR</option>
+          <option value="JPY">🇯🇵 JPY to INR</option>
+        </select>
+        <select id="alertCondition">
+          <option value="above">Goes Above (≥)</option>
+          <option value="below">Goes Below (≤)</option>
+        </select>
+        <input type="number" id="alertTargetValue" placeholder="Target Rate (e.g. 84.50)" step="0.01">
+        <button type="button" onclick="createRateAlert()">Set Active Watch ✦</button>
+      </div>
+    </div>
+    <div class="glass-card">
+      <h4 style="font-family: 'Playfair Display', serif; color: var(--gold-light); margin-bottom: 14px;">Active Watch Feed</h4>
+      <div id="activeAlertsFeed"></div>
+    </div>
+  </div>
+
+  <h3 class="section-title">Popular Rates</h3>
+  <div class="rates-flex">
+    <div class="rate-card">
+      <div class="flag">🇺🇸</div>
+      <h3>USD → INR</h3>
+      <p class="live-rate" data-currency="USD">₹83.00</p>
+    </div>
+    <div class="rate-card">
+      <div class="flag">🇪🇺</div>
+      <h3>EUR → INR</h3>
+      <p class="live-rate" data-currency="EUR">₹90.00</p>
+    </div>
+    <div class="rate-card">
+      <div class="flag">🇬🇧</div>
+      <h3>GBP → INR</h3>
+      <p class="live-rate" data-currency="GBP">₹105.00</p>
+    </div>
+    <div class="rate-card">
+      <div class="flag">🇦🇺</div>
+      <h3>AUD → INR</h3>
+      <p class="live-rate" data-currency="AUD">₹55.00</p>
+    </div>
+    <div class="rate-card">
+      <div class="flag">🇨🇦</div>
+      <h3>CAD → INR</h3>
+      <p class="live-rate" data-currency="CAD">₹61.00</p>
+    </div>
+    <div class="rate-card">
+      <div class="flag">🇯🇵</div>
+      <h3>JPY → INR</h3>
+      <p class="live-rate" data-currency="JPY">₹0.55</p>
+    </div>
+  </div>
+
+  <img src="https://images.unsplash.com/photo-1610375461246-83df859d849d?w=1200&auto=format&fit=crop&q=80" alt="Gold bullion bars" class="section-img">
+
+  <h3 class="section-title">Detailed Rates</h3>
+  <div class="glass-card" style="padding:0; overflow:hidden; margin-bottom:40px;">
+    <table class="styled-table">
+      <tr>
+        <th>Country</th>
+        <th>Currency</th>
+        <th>Code</th>
+        <th>Rate (INR)</th>
+      </tr>
+      <tr><td>🇺🇸</td><td>US Dollar</td><td>USD</td><td class="table-rate" data-currency="USD">₹83.00</td></tr>
+      <tr><td>🇪🇺</td><td>Euro</td><td>EUR</td><td class="table-rate" data-currency="EUR">₹90.00</td></tr>
+      <tr><td>🇬🇧</td><td>British Pound</td><td>GBP</td><td class="table-rate" data-currency="GBP">₹105.00</td></tr>
+      <tr><td>🇦🇺</td><td>Australian Dollar</td><td>AUD</td><td class="table-rate" data-currency="AUD">₹55.00</td></tr>
+      <tr><td>🇨🇦</td><td>Canadian Dollar</td><td>CAD</td><td class="table-rate" data-currency="CAD">₹61.00</td></tr>
+      <tr><td>🇯🇵</td><td>Japanese Yen</td><td>JPY</td><td class="table-rate" data-currency="JPY">₹0.55</td></tr>
+      <tr><td>🇸🇬</td><td>Singapore Dollar</td><td>SGD</td><td class="table-rate" data-currency="SGD">₹61.50</td></tr>
+      <tr><td>🇦🇪</td><td>UAE Dirham</td><td>AED</td><td class="table-rate" data-currency="AED">₹22.60</td></tr>
+      <tr><td>🇨🇭</td><td>Swiss Franc</td><td>CHF</td><td class="table-rate" data-currency="CHF">₹92.30</td></tr>
+      <tr><td>🇨🇳</td><td>Chinese Yuan</td><td>CNY</td><td class="table-rate" data-currency="CNY">₹11.45</td></tr>
+    </table>
+  </div>
+
+  <h3 class="section-title">Interactive Trend Analytics Workstation</h3>
+  <div class="glass-card" style="margin-bottom: 40px; padding: 30px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 24px;">
+      
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <label style="font-size: 14px; color: var(--text-muted); font-weight: 500; white-space: nowrap;">Target Analysis Asset:</label>
+        <select id="trendCurrencySelector" onchange="loadTrendChart()" style="margin: 0; padding: 8px 14px; min-width: 160px; background: var(--bg-deep); border-color: var(--border);">
+          <option value="USD">🇺🇸 USD to INR</option>
+          <option value="EUR">🇪🇺 EUR to INR</option>
+          <option value="GBP">🇬🇧 GBP to INR</option>
+          <option value="AUD">🇦🇺 AUD to INR</option>
+          <option value="CAD">🇨🇦 CAD to INR</option>
+          <option value="JPY">🇯🇵 JPY to INR</option>
+          <option value="SGD">🇸🇬 SGD to INR</option>
+          <option value="AED">🇦🇪 AED to INR</option>
+          <option value="CHF">🇨🇭 CHF to INR</option>
+        </select>
+      </div>
+      
+      <div class="timespan-selector">
+        <button class="timespan-btn" onclick="changeTimespan(7, this)">7 Days</button>
+        <button class="timespan-btn active" onclick="changeTimespan(30, this)">30 Days</button>
+        <button class="timespan-btn" onclick="changeTimespan(90, this)">90 Days</button>
+        <button class="timespan-btn" onclick="changeTimespan(365, this)">1 Year</button>
+      </div>
+    </div>
+
+    <div style="position: relative; width: 100%; height: 320px;">
+      <canvas id="mainTrendsCanvas"></canvas>
+    </div>
+  </div>
+</div>
+<script>
+  let analyticalTrendChartInstance = null;
+let selectedActiveDaysOffset = 30;
+
+async function loadLiveRates() {
+  try {
+    const response = await fetch("https://open.er-api.com/v6/latest/USD");
+    const data = await response.json();
+    const liveRatesCalculated = {};
+
+    const cardRates = document.querySelectorAll(".live-rate");
+    cardRates.forEach(rate => {
+      const currency = rate.dataset.currency;
+      let value = currency === "USD" ? data.rates["INR"] : data.rates["INR"] / data.rates[currency];
+      liveRatesCalculated[currency] = value;
+      rate.innerText = `₹${value.toFixed(2)}`;
+    });
+    
+    const tableRates = document.querySelectorAll(".table-rate");
+    tableRates.forEach(rate => {
+      const currency = rate.dataset.currency;
+      let value = currency === "USD" ? data.rates["INR"] : data.rates["INR"] / data.rates[currency];
+      rate.innerText = `₹${value.toFixed(2)}`;
+    });
+
+    evaluateActiveAlerts(liveRatesCalculated);
+  } catch(error) {
+    console.log(error);
+  }
+}
+
+async function loadTrendChart() {
+  const chosenCurrency = document.getElementById('trendCurrencySelector').value;
+  const days = selectedActiveDaysOffset;
+  
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  try {
+    const response = await fetch(`https://api.frankfurter.dev/v1/${startDate}..${endDate}?base=${chosenCurrency}&symbols=INR`);
+    const data = await response.json();
+    
+    const rawDatesArr = Object.keys(data.rates);
+    const ratesCalculatedArr = rawDatesArr.map(date => data.rates[date]['INR']);
+    
+    const axisLabels = rawDatesArr.map(dateStr => {
+      const parsed = new Date(dateStr);
+      return days > 90 
+        ? parsed.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        : parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    // Clear active container pointers before firing up layout redraw sequence
+    if (analyticalTrendChartInstance) {
+      analyticalTrendChartInstance.destroy();
+    }
+
+    const canvasCtx = document.getElementById('mainTrendsCanvas').getContext('2d');
+    analyticalTrendChartInstance = new Chart(canvasCtx, {
+      type: 'line',
+      data: {
+        labels: axisLabels,
+        datasets: [{
+          data: ratesCalculatedArr,
+          borderColor: '#c9a84c',
+          backgroundColor: 'rgba(201,168,76,0.04)',
+          fill: true,
+          tension: 0.25,
+          borderWidth: 2,
+          pointRadius: days > 90 ? 0 : 2, 
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#c9a84c'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(6, 11, 20, 0.95)',
+            titleColor: 'var(--gold-light)',
+            bodyColor: '#f1f5f9',
+            borderColor: 'rgba(201,168,76,0.2)',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: function(context) { return `Value: ₹${context.raw.toFixed(2)}`; }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#94a3b8', font: { family: 'DM Sans', size: 10 }, maxTicksLimit: days > 90 ? 7 : 9 }
+          },
+          y: {
+            grid: { color: 'rgba(201,168,76,0.03)' },
+            ticks: { color: '#94a3b8', font: { family: 'DM Sans', size: 10 } }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Failed loading analytical framework timelines data trace loops:", err);
+  }
+}
+
+function changeTimespan(days, element) {
+  document.querySelectorAll('.timespan-btn').forEach(btn => btn.classList.remove('active'));
+  element.classList.add('active');
+  selectedActiveDaysOffset = days;
+  loadTrendChart();
+}
+
+const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+const alertsStorageKey = activeUser ? `rateAlerts_${activeUser.email}` : 'rateAlerts_guest';
+let watchAlerts = JSON.parse(localStorage.getItem(alertsStorageKey)) || [];
+
+function createRateAlert() {
+  const currency = document.getElementById('alertCurrency').value;
+  const condition = document.getElementById('alertCondition').value;
+  const targetInput = document.getElementById('alertTargetValue');
+  const targetValue = parseFloat(targetInput.value);
+
+  if (!targetValue || targetValue <= 0) {
+    alert("Please assign a valid numerical rate threshold indicator.");
+    return;
+  }
+
+  const newAlert = { id: Date.now(), currency: currency, condition: condition, targetValue: targetValue };
+  watchAlerts.push(newAlert);
+  localStorage.setItem(alertsStorageKey, JSON.stringify(watchAlerts));
+  targetInput.value = "";
+  renderActiveAlertsList();
+  loadLiveRates();
+}
+
+function renderActiveAlertsList() {
+  const container = document.getElementById('activeAlertsFeed');
+  container.innerHTML = "";
+
+  if (watchAlerts.length === 0) {
+    container.innerHTML = `<p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px 0;">No threshold tracks activated yet.</p>`;
+    return;
+  }
+
+  watchAlerts.forEach((alert, index) => {
+    container.innerHTML += `
+      <div class="active-alert-item">
+        <span style="font-size: 14px;">
+          ⚙️ <b>${alert.currency} → INR</b> when value is 
+          <span style="color: var(--gold-light);">${alert.condition === 'above' ? '≥' : '≤'} ₹${alert.targetValue.toFixed(2)}</span>
+        </span>
+        <button class="clear-alert-btn" onclick="removeAlert(${index})">✕</button>
+      </div>
+    `;
+  });
+}
+
+function removeAlert(index) {
+  watchAlerts.splice(index, 1);
+  localStorage.setItem(alertsStorageKey, JSON.stringify(watchAlerts));
+  renderActiveAlertsList();
+}
+
+function evaluateActiveAlerts(currentRates) {
+  let itemsToClear = [];
+  watchAlerts.forEach((alertItem, idx) => {
+    const freshCurrentRate = currentRates[alertItem.currency];
+    if (!freshCurrentRate) return;
+
+    let conditionMet = false;
+    if (alertItem.condition === 'above' && freshCurrentRate >= alertItem.targetValue) conditionMet = true;
+    else if (alertItem.condition === 'below' && freshCurrentRate <= alertItem.targetValue) conditionMet = true;
+
+    if (conditionMet) {
+      triggerNotification(`${alertItem.currency} to INR has reached **₹${freshCurrentRate.toFixed(2)}** (Target was ${alertItem.condition === 'above' ? '≥' : '≤'} ₹${alertItem.targetValue.toFixed(2)})`);
+      itemsToClear.push(idx);
+    }
+  });
+
+  if (itemsToClear.length > 0) {
+    watchAlerts = watchAlerts.filter((_, index) => !itemsToClear.includes(index));
+    localStorage.setItem(alertsStorageKey, JSON.stringify(watchAlerts));
+    renderActiveAlertsList();
+  }
+}
+
+function triggerNotification(msg) {
+  const toast = document.getElementById('notification-toast');
+  document.getElementById('notification-message').innerHTML = msg;
+  toast.classList.add('show');
+}
+
+function dismissNotification() {
+  document.getElementById('notification-toast').classList.remove('show');
+}
+const searchInput = document.getElementById("currencySearch");
+searchInput.addEventListener("input", () => {
+  const value = searchInput.value.toLowerCase();
+  const cards = document.querySelectorAll(".rate-card");
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+    card.style.display = text.includes(value) ? "block" : "none";
+  });
+});
+
+window.onload = function() {
+  renderActiveAlertsList();
+  loadLiveRates();
+  loadTrendChart(); // Initializes workspace rendering chart natively
+  setInterval(loadLiveRates, 60000);
+};
+</script>
+</body>
+</html>

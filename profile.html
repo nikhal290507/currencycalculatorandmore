@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Profile — CurrencyApp</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* Subtle deep security vault texture */
+.profile-page {
+  position: relative;
+  min-height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+}
+.profile-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&auto=format&fit=crop&q=80') no-repeat center/cover;
+  opacity: 0.05;
+  z-index: 0;
+}
+.profile-wrapper {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 50px 20px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .profile-wrapper { grid-template-columns: 1fr; }
+}
+
+/* Profile Badge Styles */
+.avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.1);
+  border: 2px solid var(--gold);
+  color: var(--gold-light);
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.meta-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.meta-value {
+  font-size: 16px;
+  color: var(--text-bright);
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #f87171;
+  color: #f87171;
+  margin-top: 10px;
+}
+.logout-btn:hover {
+  background: rgba(248,113,113,0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ── UNIVERSAL FOOTER CONTACT INTEGRATION ── */
+.footer-contact-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px 20px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 50px;
+  text-align: left;
+}
+.footer-info-col h3, .footer-form-col h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold-light);
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+.footer-info-col p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+#footer-success-msg {
+  display: none;
+  text-align: center;
+  color: var(--gold-light);
+  font-size: 14px;
+  margin-top: 6px;
+  padding: 12px;
+  background: rgba(201,168,76,0.07);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+  .footer-contact-wrapper { grid-template-columns: 1fr; gap: 36px; padding: 30px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">💱</div>
+    <h1>CurrencyApp</h1>
+  </div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="converter.html">Converter</a>
+    <a href="rates.html">Rates</a>
+    <a href="travel.html">Travel Log</a>
+    <a href="about.html">About</a>
+    <a href="profile.html" class="active" id="nav-profile-link">Profile</a>
+  </nav>
+</header>
+
+<div class="profile-page">
+  <div class="profile-wrapper">
+    
+    <div class="glass-card avatar-container">
+      <div class="profile-avatar">👤</div>
+      <h3 id="profile-card-name" style="font-family: 'Playfair Display', serif; color: var(--gold-light); margin-bottom: 4px; font-size: 20px;">User Account</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Premium Client Tier</p>
+      <button class="logout-btn" onclick="handleLogout()">Secure Log Out</button>
+    </div>
+
+    <div class="glass-card" style="padding: 36px;">
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light); margin-bottom: 24px; font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Security Profile Parameters</h3>
+      
+      <div class="meta-label">Client Identity Name</div>
+      <div class="meta-value" id="profile-info-name">Loading...</div>
+      
+      <div class="meta-label">Registered Electronic Mail</div>
+      <div class="meta-value" id="profile-info-email">Loading...</div>
+      
+      <div class="meta-label">Terminal Status Key</div>
+      <div class="meta-value" style="color: #4ade80; font-weight: bold;">✓ Verification Confirmed (Active Local Session)</div>
+      
+      <div style="margin-top: 30px; padding: 16px; background: rgba(201,168,76,0.03); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+        🔒 Your session keys are fully processed locally using client-side sandbox container parameters. No personal authentication registries are broadcasted across open networks.
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+
+if (!activeUser) {
+  window.location.href = 'login.html';
+} else {
+  document.getElementById('profile-card-name').innerText = activeUser.name;
+  document.getElementById('profile-info-name').innerText = activeUser.name;
+  document.getElementById('profile-info-email').innerText = activeUser.email;
+}
+
+function handleLogout() {
+  localStorage.removeItem('activeUser');
+  localStorage.removeItem('rateAlerts');
+  localStorage.removeItem('tripExpenses');
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>

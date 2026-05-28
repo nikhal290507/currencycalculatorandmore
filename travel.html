@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Log — CurrencyApp</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* Dark atmospheric passport & travel flatlay background */
+.page-banner::before {
+  background: url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1600&auto=format&fit=crop&q=80') no-repeat center/cover !important;
+}
+
+/* Two-column layout matching the app structure */
+.travel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.8fr;
+  gap: 30px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .travel-grid { grid-template-columns: 1fr; }
+}
+
+/* Custom styling for the item actions */
+.delete-btn {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: none;
+  width: auto;
+  display: inline-block;
+  margin: 0;
+}
+
+.delete-btn:hover {
+  background: rgba(248,113,113,0.1);
+  box-shadow: 0 0 10px rgba(248,113,113,0.2);
+  border-color: #f87171;
+  transform: translateY(-1px);
+}
+
+.total-display {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: #4ade80;
+  font-weight: bold;
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">💱</div>
+    <h1>CurrencyApp</h1>
+  </div>
+  <nav>
+  <a href="index.html">Home</a>
+  <a href="converter.html">Converter</a>
+  <a href="rates.html">Rates</a>
+  <a href="travel.html" class="active">Travel Log</a>
+  <a href="about.html">About</a>
+  <a href="login.html" id="nav-auth-link">Account</a>
+</nav>
+</header>
+
+<div class="page-banner">
+  <div class="banner-content">
+    <h2>🧳 Travel Expense Logger</h2>
+    <p>Track your international spending dynamically converted into your home currency</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="travel-grid">
+    
+    <div class="glass-card">
+      <h3 style="color: var(--gold-light); margin-bottom: 20px; font-family: 'Playfair Display', serif; font-size: 20px;">Log New Expense</h3>
+      <div class="form-group">
+        <label style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Expense Description</label>
+        <input type="text" id="expenseName" placeholder="e.g., Airport Taxi, Dinner, Souvenirs">
+        
+        <label style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 8px;">Amount Paid</label>
+        <input type="number" id="expenseAmount" placeholder="0.00" min="0" step="0.01">
+        
+        <label style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 8px;">Transaction Currency</label>
+        <select id="expenseCurrency">
+          <option value="USD">🇺🇸 USD</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+          <option value="JPY">🇯🇵 JPY</option>
+          <option value="AUD">🇦🇺 AUD</option>
+          <option value="CAD">🇨🇦 CAD</option>
+          <option value="AED">🇦🇪 AED</option>
+          <option value="SGD">🇸🇬 SGD</option>
+          <option value="CHF">🇨🇭 CHF</option>
+          <option value="INR">🇮🇳 INR</option>
+        </select>
+        
+        <label style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 8px;">Your Home Currency (Target)</label>
+        <select id="homeCurrency" onchange="recalculateAllExpenses()">
+          <option value="INR" selected>🇮🇳 INR</option>
+          <option value="USD">🇺🇸 USD</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+        </select>
+        
+        <button type="button" onclick="addExpense()" style="margin-top: 16px;">Add to Statement ✦</button>
+      </div>
+    </div>
+    
+    <div class="glass-card" style="overflow-x: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px;">
+        <h3 style="color: var(--gold-light); font-family: 'Playfair Display', serif; font-size: 20px;">Live Trip Ledger</h3>
+        <button type="button" class="delete-btn" onclick="clearAllExpenses()" style="color: var(--text-muted); border-color: var(--border);">Wipe Statement</button>
+      </div>
+      
+      <table class="styled-table" id="expenseTable">
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>Foreign Cost</th>
+            <th id="tableHomeHeader">Cost (INR)</th>
+            <th style="text-align: center;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="expenseList">
+          </tbody>
+      </table>
+      
+      <div style="margin-top: 24px; text-align: right; border-top: 1px solid var(--border); padding-top: 16px;">
+        <span style="font-size: 13px; color: var(--text-muted); display: block;">Total Converted Spending:</span>
+        <div class="total-display" id="runningTotal">₹0.00</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  // Fetch the active session to build a unique storage container identifier
+const activeUser = JSON.parse(localStorage.getItem('activeUser'));
+const travelStorageKey = activeUser ? `tripExpenses_${activeUser.email}` : 'tripExpenses_guest';
+
+// State management directly linked into user-specific browser storage cache
+let tripExpenses = JSON.parse(localStorage.getItem(travelStorageKey)) || [];
+
+async function addExpense() {
+  const nameInput = document.getElementById('expenseName');
+  const amountInput = document.getElementById('expenseAmount');
+  const expenseCurr = document.getElementById('expenseCurrency').value;
+  const homeCurr = document.getElementById('homeCurrency').value;
+
+  const name = nameInput.value.trim();
+  const amount = parseFloat(amountInput.value);
+
+  if (!name || !amount || amount <= 0) {
+    alert("Please enter a valid descriptive title and positive cost value.");
+    return;
+  }
+
+  try {
+    let finalConverted = amount;
+    
+    // Call matrix parameters if currency pairs aren't identical
+    if (expenseCurr !== homeCurr) {
+      const response = await fetch(`https://open.er-api.com/v6/latest/${expenseCurr}`);
+      const data = await response.json();
+      finalConverted = amount * data.rates[homeCurr];
+    }
+
+    const newItem = {
+      id: Date.now(),
+      name: name,
+      foreignAmount: amount,
+      foreignCurrency: expenseCurr,
+      convertedAmount: finalConverted
+    };
+
+    tripExpenses.push(newItem);
+    localStorage.setItem(travelStorageKey, JSON.stringify(tripExpenses));
+    
+    // Clear user entry positions
+    nameInput.value = "";
+    amountInput.value = "";
+    
+    renderExpenses();
+  } catch (e) {
+    console.error(e);
+    alert("Network error: Unable to pull exchange rates for conversion.");
+  }
+}
+
+function renderExpenses() {
+  const listContainer = document.getElementById('expenseList');
+  const homeCurr = document.getElementById('homeCurrency').value;
+  const totalBox = document.getElementById('runningTotal');
+  document.getElementById('tableHomeHeader').innerText = `Cost (${homeCurr})`;
+
+  listContainer.innerHTML = "";
+  let aggregateTotal = 0;
+
+  if (tripExpenses.length === 0) {
+    listContainer.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px 20px; font-size: 14px;">No logged purchases on this itinerary yet.</td></tr>`;
+    totalBox.innerText = `${getCurrencySymbol(homeCurr)}0.00`;
+    return;
+  }
+
+  tripExpenses.forEach((item, index) => {
+    aggregateTotal += item.convertedAmount;
+    listContainer.innerHTML += `
+      <tr>
+        <td style="color: var(--text-bright); font-weight: 500;">${item.name}</td>
+        <td style="color: var(--text-muted);">${item.foreignAmount.toFixed(2)} ${item.foreignCurrency}</td>
+        <td style="color: #4ade80; font-weight: 600;">${getCurrencySymbol(homeCurr)}${item.convertedAmount.toFixed(2)}</td>
+        <td style="text-align: center;">
+          <button type="button" class="delete-btn" onclick="deleteExpense(${index})">✕ Remove</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  totalBox.innerText = `${getCurrencySymbol(homeCurr)}${aggregateTotal.toFixed(2)}`;
+}
+
+function deleteExpense(index) {
+  tripExpenses.splice(index, 1);
+  localStorage.setItem(travelStorageKey, JSON.stringify(tripExpenses));
+  renderExpenses();
+}
+
+function clearAllExpenses() {
+  if (confirm("Are you confident you want to delete all line entries from this travel record sheet?")) {
+    tripExpenses = [];
+    localStorage.removeItem(travelStorageKey);
+    renderExpenses();
+  }
+}
+
+async function recalculateAllExpenses() {
+  const homeCurr = document.getElementById('homeCurrency').value;
+  if (tripExpenses.length === 0) {
+    renderExpenses();
+    return;
+  }
+
+  document.getElementById('runningTotal').innerText = "Recalculating conversion matrices...";
+  
+  try {
+    for (let item of tripExpenses) {
+      if (item.foreignCurrency === homeCurr) {
+        item.convertedAmount = item.foreignAmount;
+      } else {
+        const response = await fetch(`https://open.er-api.com/v6/latest/${item.foreignCurrency}`);
+        const data = await response.json();
+        item.convertedAmount = item.foreignAmount * data.rates[homeCurr];
+      }
+    }
+    localStorage.setItem(travelStorageKey, JSON.stringify(tripExpenses));
+    renderExpenses();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function getCurrencySymbol(code) {
+  switch(code) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'EUR': return '€';
+    case 'GBP': return '£';
+    default: return code + ' ';
+  }
+}
+
+window.onload = function() {
+  renderExpenses();
+};
+</script>
+</body>
+</html>
